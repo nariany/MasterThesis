@@ -1,0 +1,18 @@
+#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
+
+int main(int argc, char **argv){
+	
+	ros::init(argc,argv,"velocity_talker");
+	ros::NodeHande n;
+	ros::Publisher chatty=n.advertise<geometry_msgs::Twist>("robot_1/cmd_vel",10);
+	ros::loop_rate(1000);
+	geometry_msgs::Twist velocity;
+	while(ros::ok()){
+		velocity.linear.x=0.7;
+		chatty.publish(velocity);
+		ros::spin();
+		loop_rate.sleep();
+	}
+	return 0;
+}

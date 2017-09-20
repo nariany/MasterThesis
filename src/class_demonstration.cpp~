@@ -1,0 +1,47 @@
+#include <ros/ros.h>
+#include <sensor_msgs/LaserScan.h>
+#include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
+using namespace std;
+class RobotDummyControlExample
+{
+   ros::NodeHandle n_;
+   ros::Publisher pub_;
+   ros::Subscriber sub_1;
+   ros::Subscriber sub_2; 
+ public:
+   RobotDummyControlExample();
+  ~RobotDummyControlExample();
+   void callback_laser(const sensor_msgs::LaserScan &scan);
+   void callback_odometry(const nav_msgs::Odometry::ConstPtr& msg);
+};
+int main(int argc,char **argv){
+  ros::init(argc,argv,"robot_dummy_control_example_node");
+  RobotDummyControlExample sample;
+  ros::spin();
+}
+ RobotDummyControlExample::RobotDummyControlExample()
+ {
+    sub_1=n_.subscribe("base_scan",10,&RobotDummyControlExample::callback_laser,this);
+    sub_2=n_.subscribe("base_pose_ground_truth",10,&RobotDummyControlExample::callback_odometry,this);
+    pub_=n_.advertise<geometry_msgs::Twist>("cmd_vel",10);
+ }
+ RobotDummyControlExample::~RobotDummyControlExample()
+ {}
+ void RobotDummyControlExample::callback_laser(const sensor_msgs::LaserScan& scan)
+ {
+      for(int i=0;i<scan.ranges.size();i++){
+          //cout<<"LaserScan range:"<<scan.ranges[i]<<endl;
+           ROS_INFO("LaserScan range:%f",scan.ranges[i],"\n");
+        }
+ }
+ void RobotDummyControlExample::callback_odometry(const nav_msgs::Odometry::ConstPtr& msg){
+     ROS_INFO("x=%f",msg->pose.pose.orientation.x,"\n");
+     ROS_INFO("y=%f",msg->pose.pose.orientation.y,"\n");
+     ROS_INFO("z=%f",msg->pose.pose.orientation.z,"\n");
+     ROS_INFO("w=%f",msg->pose.pose.orientation.w,"\n");
+      geometry_msgs::Twist control_variable;
+      control_variable.linear.x=0.5;
+      control_variable.angular.z=0.5;
+      pub_.publish(control_variable);
+  }

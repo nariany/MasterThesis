@@ -1,0 +1,60 @@
+#include <acado_toolkit.hpp>
+#include <acado_gnuplot.hpp>
+
+int main( ){
+         USING_NAMESPACE_ACADO
+         DifferentialState xB,xW,vB,vW;
+         Disturbance R;
+         Control F;
+         //Parameter mB;
+         double mB=300.0;
+         double mW=50.0;
+         double kS=20000.0;
+         double kT=200000.0;
+         DifferentialEquation f;
+         f<<dot(xB)==vB;
+         f<<dot(xW)==vW;
+         f<<dot(vB)==(-kS*xB+kS*xW+F)/mB;
+         f<<dot(vW)==(kS*xB-(kT+kS)*xW+kT*R-F)/mW;
+         OutputFcn g;
+         g<<xB;
+         g<<500.0*vB+F;
+         DynamicSystem dynSys(f,g);
+         Process myProcess;
+         myProcess.setDynamicSystem(dynSys,INT_RK45);
+         myProcess.set(ABSOLUTE_TOLERANCE,1.0e-8);
+         DVector x0(4);
+         x0.setZero();
+         x0(0)=0.01;
+         myProcess.initializeStartValues(x0);
+         myProcess.setProcessDisturbance("road.txt");
+         myProcess.set(PLOT_RESOLUTION,HIGH);
+         GnuplotWindow window;
+          window.addSubplot(xB,"Pozicija tijela vozila [m]");
+          window.addSubplot(xW,"Pozicija kotača [m]");
+          window.addSubplot(vB,"Brzina tijela [m/s]");
+          window.addSubplot(vW,"Brzina kotača [m/s");
+          window.addSubplot(F,"Sila [N]");
+          window.addSubplot(mB,"Masa tijela vozila [kg]");
+          window.addSubplot(R,"Smetnje ceste");
+          window.addSubplot(g(0),"Izlaz 1");
+          window.addSubplot(g(1),"Izlaz 2");
+         myProcess<<window;
+        VariablesGrid u(1,0.0,1.0,6);
+        u(0,0)=10.0;
+        u(1,0)=-200.0;
+        u(2,0)=200.0;
+        u(3,0)=0.0;
+        u(4,0)=0.0;
+        u(5,0)=0.0;
+        DVector p(1);
+        p(0)=350.0;
+        myProcess.init(0.0);
+        myProcess.run(u,p);
+        VariablesGrid xSim,ySim;
+        myProcess.getLast(LOG_SIMULATED_DIFFERENTIAL_STATES,xSim);
+        xSim.print("Simulated Differential States");
+        myProcess.getLast(LOG_PROCESS_OUTPUT,ySim);
+        ySim.print("Process Output");
+      return 0;
+ }

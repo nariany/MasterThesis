@@ -1,0 +1,41 @@
+#include <acado_toolkit.hpp>
+#include <acado_gnuplot.hpp>
+#include <acado_optimal_control.hpp>
+int main( ){
+         USING_NAMESPACE_ACADO
+         Parameter y1,y2;
+         NLP nlp;
+         nlp.minimize(0,y1);
+         nlp.minimize(1,y2);
+         nlp.subjectTo(0.0<=y1<=5.0);
+         nlp.subjectTo(0.0<=y2<=5.2);
+         nlp.subjectTo(0.0<=y2-5*exp(-y1)-2.0*exp(-0.5*(y1-3.0)*(y1-3.0)));
+         MultiObjectiveAlgorithm algorithm (nlp);
+         algorithm.set(PARETO_FRONT_GENERATION,PFG_NORMAL_BOUNDARY_INTERSECTION);
+         algorithm.set(PARETO_FRONT_DISCRETIZATION,41);
+         algorithm.set(KKT_TOLERANCE,1e-12);
+         algorithm.initializeParameters("initial_scalar2_1.txt");
+         algorithm.solveSingleObjective(1);
+         algorithm.initializeParameters("initial_scalar2_2.txt");
+         algorithm.solveSingleObjective(0);
+         algorithm.solve();
+         VariablesGrid paretoFront;
+         algorithm.getParetoFront(paretoFront);
+         GnuplotWindow window1;
+          window1.addSubplot(paretoFront,"Pareto Front y1 vs y2","y1","y2",PM_POINTS);
+         window1.plot();
+         FILE *file=fopen("scalar2_nbi_pareto.txt","w");
+         paretoFront.print();
+         file==paretoFront;
+         fclose(file);
+         algorithm.getParetoFrontWithFilter(paretoFront);
+         GnuplotWindow window2;
+         window2.addSubplot(paretoFront,"Pareto Front (with filter) y1 vs y2","y1","y2",PM_POINTS);
+         window2.plot();
+         FILE *file2=fopen("scalar2_nbi_pareto_filtered.txt","w");
+         paretoFront.print();
+         file2<<paretoFront;
+         fclose(file2);
+         algorithm.printInfo();
+      return 0;
+}
